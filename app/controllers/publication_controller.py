@@ -43,11 +43,11 @@ def submit_publication_controller(main_docx, supporting_image, first_name, last_
         return response_json({}, 'Something went wrong', 500)
 
 
-def get_publications_controller(filter_by, search_param, page_number):
+def get_publications_controller(filter_by, search_param, page_number, limit):
     try:
         logger.debug("User is trying to get all publications...")
         get_all_publications, next_page = get_all_publications_db(
-            filter_by, search_param, page_number)
+            filter_by, search_param, page_number, limit)
 
         return response_json({
             "publications": get_all_publications,

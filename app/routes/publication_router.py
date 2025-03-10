@@ -30,6 +30,7 @@ def submit_publication(
 @publication_router.get("/get_publications")
 def get_publications(filter_by: str = Query("", alias="filter_by"),
                      search_param: str = Query("", alias="search_param"),
-                     page_number: int = Query(1, alias="page_number")):
+                     page_number: int = Query(1, alias="page_number"),
+                     limit: int = Query(6, alias="limit")):
     print(filter_by, search_param, page_number)
-    return get_publications_controller(filter_by, search_param, page_number)
+    return get_publications_controller(filter_by, search_param, page_number, limit)

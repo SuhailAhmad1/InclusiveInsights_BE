@@ -33,7 +33,7 @@ def submit_publication_db(docx_path, img_path, first_name, last_name, email, sub
 
 ist_timezone = pytz.timezone("Asia/Kolkata")
 
-def get_all_publications_db(filter_by, search_param, page_number):
+def get_all_publications_db(filter_by, search_param, page_number, limit):
     try:
         skip = (page_number - 1) * 6
         query = {
@@ -45,14 +45,14 @@ def get_all_publications_db(filter_by, search_param, page_number):
         if search_param:
             query["publication_title"] = {"$regex": search_param, "$options": "i"}
         
-        publications_cursor = submitted_publication.find(query).sort("_id", -1).skip(skip).limit(7)
+        publications_cursor = submitted_publication.find(query).sort("_id", -1).skip(skip).limit(limit+1)
         publications_list = list(publications_cursor)  # Convert to list once
 
         # Check if there is a next page
-        has_next_page = len(publications_list) > 6
+        has_next_page = len(publications_list) > limit
 
         # Trim the extra document
-        publications = publications_list[:6]
+        publications = publications_list[:limit]
 
         res = []
         # Print the results
