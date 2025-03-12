@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from app.core.db import db
 import pytz
 import json
+from bson import ObjectId
 
 submitted_publication = db["submitted_publication"]
 
@@ -33,6 +34,7 @@ def submit_publication_db(docx_path, img_path, first_name, last_name, email, sub
 
 ist_timezone = pytz.timezone("Asia/Kolkata")
 
+
 def get_all_publications_db(filter_by, search_param, page_number, limit):
     try:
         skip = (page_number - 1) * 6
@@ -43,9 +45,11 @@ def get_all_publications_db(filter_by, search_param, page_number, limit):
             query["submission_type"] = filter_by
 
         if search_param:
-            query["publication_title"] = {"$regex": search_param, "$options": "i"}
-        
-        publications_cursor = submitted_publication.find(query).sort("_id", -1).skip(skip).limit(limit+1)
+            query["publication_title"] = {
+                "$regex": search_param, "$options": "i"}
+
+        publications_cursor = submitted_publication.find(
+            query).sort("_id", -1).skip(skip).limit(limit+1)
         publications_list = list(publications_cursor)  # Convert to list once
 
         # Check if there is a next page
@@ -66,10 +70,29 @@ def get_all_publications_db(filter_by, search_param, page_number, limit):
                 "description": publication["description"],
                 "category": publication["submission_type"]
             }
-            
+
             res.append(this_publiaction)
-        
+
         return res, has_next_page
 
+    except Exception as e:
+        raise e
+
+
+def get_publication_data_db(publication_id):
+    try:
+        publication_data = submitted_publication.find_one({"_id": ObjectId(publication_id)})
+        if publication_data:
+            data = {
+                "id": str(publication_data["_id"]),
+                "title": publication_data["publication_title"].title(),
+                "created_at": publication_data["created_at"].strftime("%d-%b-%Y %-I:%M %p"),
+                "author": (f'{publication_data["first_name"].strip()} {publication_data["last_name"].strip()}').title(),
+                "img": publication_data["image_path"],
+                "description": publication_data["description"],
+                "category": publication_data["submission_type"]
+            }
+            return data
+        return publication_data
     except Exception as e:
         raise e

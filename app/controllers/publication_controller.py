@@ -4,7 +4,8 @@ import time
 from app.core.logger import logger
 from app.core.utils import response_json
 from config import DOWNLOAD_DIR, STATIC_DIR
-from app.crud.publication_crud import submit_publication_db, get_all_publications_db
+from app.crud.publication_crud import submit_publication_db, get_all_publications_db, \
+    get_publication_data_db
 
 
 def submit_publication_controller(main_docx, supporting_image, first_name, last_name, email, submission_type, publication_title, author_bio):
@@ -53,6 +54,19 @@ def get_publications_controller(filter_by, search_param, page_number, limit):
             "publications": get_all_publications,
             "next_page": next_page
         }, "Successfully retrieved all publications", 200)
+
+    except Exception as e:
+        logger.exception(str(e))
+        return response_json({}, 'Something went wrong', 500)
+
+
+def get_publication_data_controller(publication_id):
+    try:
+        logger.debug(f"User is trying to get publication : {publication_id}")
+        publication_data = get_publication_data_db(publication_id)
+        if publication_data:
+            return response_json(publication_data, "Successfully retrived publication data", 200)
+        return response_json({}, "Publication not found!", 404)
 
     except Exception as e:
         logger.exception(str(e))
