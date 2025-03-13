@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 from app.core.db import db
 import pytz
 import json
@@ -64,7 +64,7 @@ def get_all_publications_db(filter_by, search_param, page_number, limit):
             this_publiaction = {
                 "id": str(publication["_id"]),
                 "title": publication["publication_title"],
-                "created_at": publication["created_at"].strftime("%d-%b-%Y %-I:%M %p"),
+                "created_at": (publication["created_at"] + timedelta(hours=5, minutes=30)).strftime("%d-%b-%Y %-I:%M %p"),
                 "author": f'{publication["first_name"]} {publication["last_name"]}',
                 "img": publication["image_path"],
                 "description": publication["description"],
@@ -81,12 +81,13 @@ def get_all_publications_db(filter_by, search_param, page_number, limit):
 
 def get_publication_data_db(publication_id):
     try:
-        publication_data = submitted_publication.find_one({"_id": ObjectId(publication_id)})
+        publication_data = submitted_publication.find_one(
+            {"_id": ObjectId(publication_id)})
         if publication_data:
             data = {
                 "id": str(publication_data["_id"]),
                 "title": publication_data["publication_title"].title(),
-                "created_at": publication_data["created_at"].strftime("%d-%b-%Y %-I:%M %p"),
+                "created_at": (publication_data["created_at"] + timedelta(hours=5, minutes=30)).strftime("%d-%b-%Y %-I:%M %p"),
                 "author": (f'{publication_data["first_name"].strip()} {publication_data["last_name"].strip()}').title(),
                 "img": publication_data["image_path"],
                 "description": publication_data["description"],
