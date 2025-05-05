@@ -1,10 +1,12 @@
-from sqlalchemy import text
-from datetime import datetime
-from sqlalchemy.exc import SQLAlchemyError
-
+from datetime import datetime, timedelta
+from app.core.db import db
+import pytz
+import json
+from bson import ObjectId
 from app.core.logger import logger
-from app.core.db import engine as db
 from app.crud.crud_utils import hash_password
+
+users = db["users"]
 
 
 def get_user_by_email_db(email):
@@ -14,32 +16,16 @@ def get_user_by_email_db(email):
         :return: userDetails
     """
     try:
-        with db.connect() as conn:
-            query = text("""
-                        SELECT 
-                        id, name, email, password, role
-                        FROM user
-                        WHERE email = :email
-                        """)
-            result = conn.execute(query,
-                                  {"email": email}
-                                  )
-            userDetails = result.fetchone()
-            if userDetails:
-                column_names = result.keys()
-                userDetails = dict(zip(column_names, userDetails))
-                return userDetails
-            else:
-                return {}
-
-    except SQLAlchemyError as e:
-        logger.exception(str(e) +
-                         '[BE_Arcolab_new/app/crud/user_crud.py:34]')
-        raise e
+        user = users.find_one({'email': email})
+        return {
+            "id": str(user["_id"]),
+            "name": user["name"],
+            "email": user["email"],
+            "password": user["password"],
+            "user_role": user["user_role"]
+        } if user else {}
 
     except Exception as e:
-        logger.exception(str(e) +
-                     '[BE_Arcolab_new/app/crud/user_crud.py:38]')
         raise e
 
 
@@ -50,31 +36,23 @@ def create_new_user_db(user):
         :return: status
     """
     try:
-        with db.connect() as conn:
-            query = text("""
-                        INSERT INTO user(name, email, password, role) 
-                        VALUES (:name, :email, :password, :user_role)
-                        """)
-            conn.execute(query,
-                         {
-                            "email": user.email,
-                            "name": user.name, 
-                            "password": hash_password(user.password), 
-                            "user_role": user.user_role}
-                         )
-
-            conn.commit()
+        data = {
+            "email": user.email,
+            "name": user.name,
+            "password": hash_password(user.password),
+            "user_role": user.user_role,
+            "last_login_time": None,
+            "created_at": datetime.now(),
+            "updated_at": datetime.now()
+        }
+        result = users.insert_one(data)
+        if result.acknowledged:
             return True
-
-    except SQLAlchemyError as e:
-        logger.exception(str(e) +
-                         '[BE_Arcolab_new/app/crud/user_crud.py:64]')
-        raise e
+        return False
 
     except Exception as e:
-        logger.exception(str(e) +
-                     '[Workflow_BE/app/services/db_services.py:60]')
         raise e
+
 
 def update_login_time_db(user_id):
     """
@@ -82,23 +60,10 @@ def update_login_time_db(user_id):
         :param user_id: user_id
     """
     try:
-        with db.connect() as conn:
-            query = text("""
-                        UPDATE user
-                        SET last_login = CURRENT_TIMESTAMP()
-                        WHERE id = :user_id
-                        """)
+        users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"last_login_at": datetime.now()}}
+        )
 
-            conn.execute(query, {"user_id": user_id})
-
-            conn.commit()
-
-    except SQLAlchemyError as e:
-        logger.exception(str(e)+
-                         '[BE_Arcolab_new/app/crud/user_crud.py:101]')
-        raise e
-    
     except Exception as e:
-        logger.exception(str(e)+
-                     '[BE_Arcolab_new/app/crud/user_crud.py:106]')
         raise e

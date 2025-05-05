@@ -39,7 +39,7 @@ class AuthService:
             raise credentials_exception
 
         user = get_user_by_email_db(email=token_data.email)
-        if user is None:
+        if user is None or user["user_role"] != "admin":
             raise credentials_exception
         return user
 

@@ -8,7 +8,7 @@ from app.crud.publication_crud import submit_publication_db, get_all_publication
     get_publication_data_db
 
 
-def submit_publication_controller(main_docx, supporting_image, first_name, last_name, email, submission_type, publication_title, author_bio):
+def submit_publication_controller(main_docx, supporting_image, img_description, first_name, last_name, email, submission_type, publication_title, author_bio):
     try:
         logger.debug(f"{first_name} is trying to submnit a publication....")
         main_file_extension = os.path.splitext(main_docx.filename)[1].lower()
@@ -31,7 +31,7 @@ def submit_publication_controller(main_docx, supporting_image, first_name, last_
             shutil.copyfileobj(supporting_image.file, buffer)
 
         db_img_path = f"/files/{current_time_stamp}/{supporting_image.filename}"
-        status = submit_publication_db(docx_path, db_img_path, first_name,
+        status = submit_publication_db(docx_path, db_img_path, img_description, first_name,
                                        last_name, email, submission_type, publication_title, author_bio)
         if status:
             logger.debug('Successfully Submutted...')

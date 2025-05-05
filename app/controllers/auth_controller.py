@@ -6,7 +6,7 @@ from app.crud.user_crud import get_user_by_email_db, create_new_user_db, update_
 from app.core.utils import response_json
 from app.services.auth_service import AuthService
 from app.core.logger import logger
-from config import ACCESS_TOKEN_EXPIRE_DAYS, REFRESH_TOKEN_EXPIRE_DAYS
+from config import ACCESS_TOKEN_EXPIRE_DAYS, REFRESH_TOKEN_EXPIRE_DAYS, USER_SIGNUP_KEY
 
 auth_service = AuthService()
 
@@ -21,7 +21,7 @@ def register_user_controller(user):
         logger.debug(str("Checking for secret_key") +
                      '[BE_Arcolab_new/app/controllers/auth_controller.py:10]')
 
-        if user.secret_key != "strideuser":
+        if user.secret_key != USER_SIGNUP_KEY:
             return response_json({}, "Mention the secret key", 400)
 
         logger.debug(str(f"{user.email} is trying to signup...") +

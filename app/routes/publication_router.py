@@ -9,6 +9,7 @@ publication_router = APIRouter(prefix="/api/publication")
 def submit_publication(
         main_docx: UploadFile = File(...),
         supporting_image: UploadFile = File(...),
+        img_description: str = Form(...),
         first_name: str = Form(...),
         last_name: str = Form(...),
         email: str = Form(...),
@@ -19,6 +20,7 @@ def submit_publication(
     return submit_publication_controller(
         main_docx,
         supporting_image,
+        img_description,
         first_name,
         last_name,
         email,

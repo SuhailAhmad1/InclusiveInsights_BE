@@ -1,8 +1,9 @@
 from typing import List
 from pydantic import BaseModel
 
-class DeleteDocs(BaseModel):
-    doc_ids: List[int]
+class PublishSubmission(BaseModel):
+    submission_id: str
+    content: str
 
 class EditDoc(BaseModel):
     doc_id: int
