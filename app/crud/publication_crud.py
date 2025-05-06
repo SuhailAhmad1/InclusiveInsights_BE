@@ -84,7 +84,7 @@ def get_all_publications_admin_db(start_date, end_date, category):
             this_publiaction = {
                 "id": str(publication["_id"]),
                 "title": publication["publication_title"].title(),
-                "created_at": (publication["created_at"]).strftime("%d-%b-%Y %-I:%M %p"),
+                "created_at": (publication["created_at"] + timedelta(hours=5, minutes=30)).strftime("%d-%b-%Y %-I:%M %p"),
                 "author": f'{publication["first_name"]} {publication["last_name"]}',
                 "email": publication["email"],
                 "img": publication["image_path"],
@@ -167,7 +167,7 @@ def get_all_publications_db(filter_by, search_param, page_number, limit):
             this_publiaction = {
                 "id": str(publication["_id"]),
                 "title": publication["publication_title"].title(),
-                "created_at": (publication["updated_at"]).strftime("%d-%b-%Y %-I:%M %p"),
+                "created_at": (publication["updated_at"] + timedelta(hours=5, minutes=30)).strftime("%d-%b-%Y %-I:%M %p"),
                 "author": f'{publication["first_name"]} {publication["last_name"]}',
                 "img": publication["image_path"],
                 "image_description": publication["image_description"],
@@ -193,7 +193,7 @@ def get_submission_data_admin_db(submission_id):
             data = {
                 "id": str(publication_data["_id"]),
                 "title": publication_data["publication_title"].title(),
-                "created_at": (publication_data["created_at"]).strftime("%d-%b-%Y %-I:%M %p"),
+                "created_at": (publication_data["created_at"] + timedelta(hours=5, minutes=30)).strftime("%d-%b-%Y %-I:%M %p"),
                 "author": (f'{publication_data["first_name"].strip()} {publication_data["last_name"].strip()}').title(),
                 "img": publication_data["image_path"],
                 "description": publication_data["description"],
@@ -218,7 +218,7 @@ def get_publication_data_db(publication_id):
             data = {
                 "id": str(publication_data["_id"]),
                 "title": publication_data["publication_title"].title(),
-                "created_at": (publication_data["updated_at"]).strftime("%d-%b-%Y %-I:%M %p"),
+                "created_at": (publication_data["updated_at"] + timedelta(hours=5, minutes=30)).strftime("%d-%b-%Y %-I:%M %p"),
                 "author": (f'{publication_data["first_name"].strip()} {publication_data["last_name"].strip()}').title(),
                 "img": publication_data["image_path"],
                 "description": publication_data["description"],
