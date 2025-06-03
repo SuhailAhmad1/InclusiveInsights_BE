@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>New Submission Notification</title>
+    <style>
+      /* Ensure proper scaling on mobile */
+      @media only screen and (max-width: 600px) {
+        .email-container {
+          width: 100% !important;
+          padding: 15px !important;
+        }
+        .btn {
+          display: block !important;
+          width: 100% !important;
+          box-sizing: border-box;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      font-family: Arial, sans-serif;
+    "
+  >
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td align="center" style="padding: 20px">
+          <table
+            class="email-container"
+            width="600"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+              background-color: #ffffff;
+              padding: 25px;
+              border-radius: 8px;
+              box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+              max-width: 600px;
+            "
+          >
+            <tr>
+              <td align="left">
+                <p style="margin: 10px 0">Hello Admin,</p>
+                <p style="margin: 10px 0">
+                  A new submission has been made with the following details:
+                </p>
+                <p style="margin: 10px 0">
+                  <strong>Title:</strong> {{ title }}
+                </p>
+                <p style="margin: 10px 0">
+                  <strong>Author:</strong> {{ author }}
+                </p>
+                <p style="margin: 10px 0">
+                  <strong>Category:</strong> {{ category }}
+                </p>
+                <p style="margin: 20px 0">
+                  <a
+                    href="{{ submission_link }}"
+                    class="btn"
+                    style="
+                      background-color: #007bff;
+                      color: #ffffff;
+                      padding: 10px 20px;
+                      text-decoration: none;
+                      border-radius: 5px;
+                      display: inline-block;
+                    "
+                    >View Submission</a
+                  >
+                </p>
+                <p style="color: #888888; font-size: 12px; margin-top: 30px">
+                  This is an automated message. Please do not reply.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

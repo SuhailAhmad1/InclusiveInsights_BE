@@ -17,3 +17,8 @@ USER_SIGNUP_KEY = os.getenv("USER_SIGNUP_KEY")
 
 DOWNLOAD_DIR = os.getenv("DOWNLOAD_DIR")
 STATIC_DIR = os.getenv("STATIC_DIR")
+
+
+SENDER_EMAIL = os.getenv("APP_EMAIL")
+EMAIL_PASSWORD = os.getenv("PASS_KEY")
+WEBAPP_BASE_URL = os.getenv("WEBAPP_BASE_URL")

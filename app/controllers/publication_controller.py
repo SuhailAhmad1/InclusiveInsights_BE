@@ -3,12 +3,24 @@ import shutil
 import time
 from app.core.logger import logger
 from app.core.utils import response_json
-from config import DOWNLOAD_DIR, STATIC_DIR
+from config import DOWNLOAD_DIR, STATIC_DIR, WEBAPP_BASE_URL
 from app.crud.publication_crud import submit_publication_db, get_all_publications_db, \
     get_publication_data_db
+from app.services.mail_service import sendSubmitEmail
 
 
-def submit_publication_controller(main_docx, supporting_image, img_description, first_name, last_name, email, submission_type, publication_title, author_bio):
+async def submit_publication_controller(
+        background_tasks,
+        main_docx,
+        supporting_image,
+        img_description,
+        first_name,
+        last_name,
+        email,
+        submission_type,
+        publication_title,
+        author_bio
+):
     try:
         logger.debug(f"{first_name} is trying to submnit a publication....")
         main_file_extension = os.path.splitext(main_docx.filename)[1].lower()
@@ -31,10 +43,18 @@ def submit_publication_controller(main_docx, supporting_image, img_description, 
             shutil.copyfileobj(supporting_image.file, buffer)
 
         db_img_path = f"/files/{current_time_stamp}/{supporting_image.filename}"
-        status = submit_publication_db(docx_path, db_img_path, img_description, first_name,
+        submitted_id = submit_publication_db(docx_path, db_img_path, img_description, first_name,
                                        last_name, email, submission_type, publication_title, author_bio)
-        if status:
-            logger.debug('Successfully Submutted...')
+        if submitted_id:
+            logger.debug('Successfully Submitted...')
+
+            logger.debug("Sending Mail to Admin")
+            background_tasks.add_task(sendSubmitEmail,{
+                "title": publication_title.title(),
+                "author": f"{first_name} {last_name}".title(),
+                "category": submission_type.title(),
+                "submission_link": f"{WEBAPP_BASE_URL}/admin/view_submission/{submitted_id}"
+            })
             return response_json({}, "Successfully Submitted.", 201)
 
         return response_json({}, "Something went wrong", 500)

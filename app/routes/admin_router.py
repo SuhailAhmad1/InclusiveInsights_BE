@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, UploadFile, File, Query, Form
+from fastapi import Depends, APIRouter, UploadFile, File, Query, BackgroundTasks
 from typing import List
 from app.controllers.admin_controller import (
     get_all_submissions_controller,
@@ -44,10 +44,11 @@ def delete_submission(
 
 @admin_router.delete("/reject_submission")
 def reject_submission(
+    background_tasks: BackgroundTasks,
     submission_id: str = Query("", alias="submission_id"),
     current_user: dict = Depends(auth_service.get_current_user)
 ):
-    return reject_submission_controller(submission_id, current_user)
+    return reject_submission_controller(background_tasks, submission_id, current_user)
 
 
 @admin_router.get("/download_manuscript")
@@ -59,7 +60,8 @@ def download_manuscript(
 
 @admin_router.post("/publish_submission")
 def publish_submission(
+    background_tasks: BackgroundTasks,
     payload: PublishSubmission,
     current_user: dict = Depends(auth_service.get_current_user)
 ):
-    return publish_submission_controller(payload, current_user)
+    return publish_submission_controller(background_tasks, payload, current_user)

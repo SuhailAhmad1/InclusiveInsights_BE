@@ -4,7 +4,7 @@ import time
 from fastapi.responses import FileResponse
 from app.core.logger import logger
 from app.core.utils import response_json
-from config import DOWNLOAD_DIR, STATIC_DIR
+from config import WEBAPP_BASE_URL
 from app.crud.publication_crud import (
     get_all_publications_admin_db,
     delete_submission_db,
@@ -12,6 +12,7 @@ from app.crud.publication_crud import (
     reject_submission_db,
     publish_submission_db
 )
+from app.services.mail_service import sendPublishedMail, sendRejectionMail
 
 
 def get_all_submissions_controller(start_date, end_date, category, limit):
@@ -58,12 +59,21 @@ def delete_submission_controller(submission_id, current_user):
         return response_json({}, 'Something went wrong', 500)
 
 
-def reject_submission_controller(submission_id, current_user):
+def reject_submission_controller(background_tasks, submission_id, current_user):
     try:
         logger.debug("admin is trying to reject a doc")
-        reject_submission_db(submission_id)
+        publication_data = reject_submission_db(submission_id)
+        if publication_data:
+            logger.debug("Successfully rejected")
+            logger.debug("Mail send to the user in the background...")
+            background_tasks.add_task(sendRejectionMail, {
+                "author": publication_data["author"],
+                "title": publication_data["title"],
+                "user_email": publication_data["email"]
+            })
+            return response_json({}, "Successfully rejected a submission", 200)
 
-        return response_json({}, "Successfully deleted a submission", 200)
+        raise Exception("Something went wrong")
 
     except Exception as e:
         logger.exception(str(e))
@@ -76,23 +86,34 @@ def download_manuscript_controller(submission_id, current_user):
         publication_data = get_submission_data_admin_db(submission_id)
 
         if publication_data and os.path.isfile(publication_data["docx_path"]):
-           return FileResponse(
+            return FileResponse(
                 path=publication_data["docx_path"],
                 filename=os.path.basename(publication_data["docx_path"]),
                 media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )     
+            )
         return response_json({}, "Submission not found!", 404)
 
     except Exception as e:
         logger.exception(str(e))
         return response_json({}, 'Something went wrong', 500)
 
-def publish_submission_controller(payload, current_user):
+
+def publish_submission_controller(background_tasks, payload, current_user):
     try:
         logger.debug("admin is trying to publish a doc")
-        publish_submission_db(payload)
+        publication_data = publish_submission_db(payload)
+        if publication_data:
+            logger.debug("Successfully Published")
+            logger.debug("Mail send to the user in the background...")
+            background_tasks.add_task(sendPublishedMail, {
+                "author": publication_data["author"],
+                "title": publication_data["title"],
+                "publication_link": f"{WEBAPP_BASE_URL}/publications/{payload.submission_id}",
+                "user_email": publication_data["email"]
+            })
+            return response_json({}, "Successfully published a submission", 200)
 
-        return response_json({}, "Successfully published a submission", 200)
+        raise Exception("Something went wrong")
 
     except Exception as e:
         logger.exception(str(e))

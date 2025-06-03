@@ -38,8 +38,8 @@ def submit_publication_db(
         }
         result = submitted_publication.insert_one(data)
         if result.acknowledged:
-            return True
-        return False
+            return str(result.inserted_id)
+        return None
 
     except Exception as e:
         raise e
@@ -116,7 +116,7 @@ def reject_submission_db(submission_id):
             {"_id": ObjectId(submission_id)},
             {"$set": {"is_published": 0, "is_rejected": 1}}
         )
-
+        return get_submission_data_admin_db(submission_id)
     except Exception as e:
         raise e
 
@@ -132,7 +132,7 @@ def publish_submission_db(payload):
                 "updated_at": datetime.now()
             }}
         )
-
+        return get_submission_data_admin_db(payload.submission_id)
     except Exception as e:
         raise e
 

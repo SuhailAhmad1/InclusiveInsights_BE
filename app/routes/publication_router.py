@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, UploadFile, File, Form, Query
+from fastapi import Depends, APIRouter, UploadFile, File, Form, Query, BackgroundTasks
 from app.controllers.publication_controller import submit_publication_controller,\
     get_publications_controller, get_publication_data_controller
 
@@ -6,7 +6,8 @@ publication_router = APIRouter(prefix="/api/publication")
 
 
 @publication_router.post("/submit_publication")
-def submit_publication(
+async def submit_publication(
+        background_tasks: BackgroundTasks,
         main_docx: UploadFile = File(...),
         supporting_image: UploadFile = File(...),
         img_description: str = Form(...),
@@ -17,7 +18,8 @@ def submit_publication(
         publication_title: str = Form(...),
         author_bio: str = Form(...)
 ):
-    return submit_publication_controller(
+    return await submit_publication_controller(
+        background_tasks,
         main_docx,
         supporting_image,
         img_description,
