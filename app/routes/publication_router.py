@@ -1,6 +1,7 @@
 from fastapi import Depends, APIRouter, UploadFile, File, Form, Query, BackgroundTasks
-from app.controllers.publication_controller import submit_publication_controller,\
+from app.controllers.publication_controller import submit_publication_controller, \
     get_publications_controller, get_publication_data_controller
+from app.core.db import get_db
 
 publication_router = APIRouter(prefix="/api/publication")
 
@@ -16,7 +17,8 @@ async def submit_publication(
         email: str = Form(...),
         submission_type: str = Form(...),
         publication_title: str = Form(...),
-        author_bio: str = Form(...)
+        author_bio: str = Form(...),
+        db=Depends(get_db)
 ):
     return await submit_publication_controller(
         background_tasks,
@@ -28,18 +30,34 @@ async def submit_publication(
         email,
         submission_type,
         publication_title,
-        author_bio
+        author_bio,
+        db
     )
 
 
 @publication_router.get("/get_publications")
-def get_publications(filter_by: str = Query("", alias="filter_by"),
-                     search_param: str = Query("", alias="search_param"),
-                     page_number: int = Query(1, alias="page_number"),
-                     limit: int = Query(6, alias="limit")):
-    return get_publications_controller(filter_by, search_param, page_number, limit)
+async def get_publications(
+    filter_by: str = Query("", alias="filter_by"),
+    search_param: str = Query("", alias="search_param"),
+    page_number: int = Query(1, alias="page_number"),
+    limit: int = Query(6, alias="limit"),
+    db=Depends(get_db)
+):
+    return await get_publications_controller(
+        filter_by,
+        search_param,
+        page_number,
+        limit,
+        db
+    )
 
 
 @publication_router.get("/get_publication_data")
-def get_publication_data(publication_id: str = Query(..., alias="publication_id")):
-    return get_publication_data_controller(publication_id)
+async def get_publication_data(
+    publication_id: str = Query(..., alias="publication_id"),
+    db=Depends(get_db)
+):
+    return await get_publication_data_controller(
+        publication_id,
+        db
+    )

@@ -13,3 +13,20 @@ formatter = logging.Formatter(
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.addHandler(logging.StreamHandler())
+
+
+suppress_loggers = [
+    "pymongo",
+    "motor",
+    "kafka", "kafka.consumer",
+    "boto", "botocore",
+    "ocrmypdf",
+    "PIL",
+    "passlib",
+    "python_multipart"
+]
+
+for name in suppress_loggers:
+    lib_logger = logging.getLogger(name)
+    lib_logger.propagate = False
+    lib_logger.setLevel(logging.WARNING)

@@ -10,6 +10,7 @@ from app.controllers.admin_controller import (
 )
 from app.schemas.admin_schema import PublishSubmission
 from app.services.auth_service import AuthService
+from app.core.db import get_db
 
 auth_service = AuthService()
 
@@ -19,49 +20,85 @@ admin_router = APIRouter(
 
 
 @admin_router.get("/get_all_submissions")
-def get_all_submissions(
+async def get_all_submissions(
     start_date: str = Query("", alias="start_date"),
     end_date: str = Query("", alias="end_date"),
     category: str = Query("", alias="category"),
-    current_user: dict = Depends(auth_service.get_current_user)
+    current_user: dict = Depends(auth_service.get_current_user),
+    db=Depends(get_db)
 ):
-    return get_all_submissions_controller(start_date, end_date, category, current_user)
+    return await get_all_submissions_controller(
+        start_date,
+        end_date,
+        category,
+        current_user,
+        db
+    )
 
 
 @admin_router.get("/get_submission_data")
-def get_submission_data(submission_id: str = Query(..., alias="submission_id"),
-                        current_user: dict = Depends(auth_service.get_current_user)):
-    return get_submission_data_controller(submission_id)
+async def get_submission_data(
+    submission_id: str = Query(..., alias="submission_id"),
+    current_user: dict = Depends(auth_service.get_current_user),
+    db=Depends(get_db)
+):
+    return await get_submission_data_controller(
+        submission_id,
+        db
+    )
 
 
 @admin_router.delete("/delete_submission")
-def delete_submission(
+async def delete_submission(
     submission_id: str = Query("", alias="submission_id"),
-    current_user: dict = Depends(auth_service.get_current_user)
+    current_user: dict = Depends(auth_service.get_current_user),
+    db=Depends(get_db)
 ):
-    return delete_submission_controller(submission_id, current_user)
+    return await delete_submission_controller(
+        submission_id,
+        current_user,
+        db
+    )
 
 
 @admin_router.delete("/reject_submission")
-def reject_submission(
+async def reject_submission(
     background_tasks: BackgroundTasks,
     submission_id: str = Query("", alias="submission_id"),
-    current_user: dict = Depends(auth_service.get_current_user)
+    current_user: dict = Depends(auth_service.get_current_user),
+    db=Depends(get_db)
 ):
-    return reject_submission_controller(background_tasks, submission_id, current_user)
+    return await reject_submission_controller(
+        background_tasks,
+        submission_id,
+        current_user,
+        db
+    )
 
 
 @admin_router.get("/download_manuscript")
-def download_manuscript(
+async def download_manuscript(
     submission_id: str = Query("", alias="submission_id"),
-    current_user: dict = Depends(auth_service.get_current_user)
+    current_user: dict = Depends(auth_service.get_current_user),
+    db=Depends(get_db)
 ):
-    return download_manuscript_controller(submission_id, current_user)
+    return await download_manuscript_controller(
+        submission_id,
+        current_user,
+        db
+    )
+
 
 @admin_router.post("/publish_submission")
-def publish_submission(
+async def publish_submission(
     background_tasks: BackgroundTasks,
     payload: PublishSubmission,
-    current_user: dict = Depends(auth_service.get_current_user)
+    current_user: dict = Depends(auth_service.get_current_user),
+    db=Depends(get_db)
 ):
-    return publish_submission_controller(background_tasks, payload, current_user)
+    return await publish_submission_controller(
+        background_tasks,
+        payload,
+        current_user,
+        db
+    )

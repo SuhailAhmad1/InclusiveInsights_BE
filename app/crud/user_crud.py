@@ -1,22 +1,16 @@
-from datetime import datetime, timedelta
-from app.core.db import db
-import pytz
-import json
+from datetime import datetime
 from bson import ObjectId
-from app.core.logger import logger
 from app.crud.crud_utils import hash_password
 
-users = db["users"]
 
-
-def get_user_by_email_db(email):
+async def get_user_by_email_db(email, db):
     """
         Function to get user details by email from db
         :param email: email of the user
         :return: userDetails
     """
     try:
-        user = users.find_one({'email': email})
+        user = await db.users.find_one({'email': email})
         return {
             "id": str(user["_id"]),
             "name": user["name"],
@@ -29,7 +23,7 @@ def get_user_by_email_db(email):
         raise e
 
 
-def create_new_user_db(user):
+async def create_new_user_db(user, db):
     """
         Function to create new user in the db
         :param user: user details
@@ -45,7 +39,7 @@ def create_new_user_db(user):
             "created_at": datetime.now(),
             "updated_at": datetime.now()
         }
-        result = users.insert_one(data)
+        result = await db.users.insert_one(data)
         if result.acknowledged:
             return True
         return False
@@ -54,13 +48,13 @@ def create_new_user_db(user):
         raise e
 
 
-def update_login_time_db(user_id):
+async def update_login_time_db(user_id, db):
     """
         Function to update login and logout time in the db
         :param user_id: user_id
     """
     try:
-        users.update_one(
+        await db.users.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {"last_login_at": datetime.now()}}
         )

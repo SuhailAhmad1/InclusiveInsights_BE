@@ -13,13 +13,19 @@ from app.crud.publication_crud import (
     publish_submission_db
 )
 from app.services.mail_service import sendPublishedMail, sendRejectionMail
+from app.services.s3_services import (
+    generate_pre_signed_url
+)
 
-
-def get_all_submissions_controller(start_date, end_date, category, limit):
+async def get_all_submissions_controller(start_date, end_date, category, limit, db):
     try:
         logger.debug("admin is trying to get all publications...")
-        get_all_publications, total_published, total_pending, total_rejected = get_all_publications_admin_db(
-            start_date, end_date, category)
+        get_all_publications, total_published, total_pending, total_rejected = await get_all_publications_admin_db(
+            start_date, 
+            end_date, 
+            category,
+            db
+            )
 
         return response_json({
             "publications": get_all_publications,
@@ -34,11 +40,17 @@ def get_all_submissions_controller(start_date, end_date, category, limit):
         return response_json({}, 'Something went wrong', 500)
 
 
-def get_submission_data_controller(submission_id):
+async def get_submission_data_controller(submission_id, db):
     try:
         logger.debug(f"User is trying to get publication : {submission_id}")
-        publication_data = get_submission_data_admin_db(submission_id)
+        publication_data = await get_submission_data_admin_db(submission_id, db)
         if publication_data:
+            publication_data["img"] = generate_pre_signed_url(
+                publication_data["img"]
+            )
+            publication_data["docx_path"] = generate_pre_signed_url(
+                publication_data["docx_path"]
+            )
             return response_json(publication_data, "Successfully retrived submission data", 200)
         return response_json({}, "Submission not found!", 404)
 
@@ -47,10 +59,10 @@ def get_submission_data_controller(submission_id):
         return response_json({}, 'Something went wrong', 500)
 
 
-def delete_submission_controller(submission_id, current_user):
+async def delete_submission_controller(submission_id, current_user, db):
     try:
         logger.debug("admin is trying to delete a doc")
-        delete_submission_db(submission_id)
+        await delete_submission_db(submission_id, db)
 
         return response_json({}, "Successfully deleted a submission", 200)
 
@@ -59,10 +71,10 @@ def delete_submission_controller(submission_id, current_user):
         return response_json({}, 'Something went wrong', 500)
 
 
-def reject_submission_controller(background_tasks, submission_id, current_user):
+async def reject_submission_controller(background_tasks, submission_id, current_user, db):
     try:
         logger.debug("admin is trying to reject a doc")
-        publication_data = reject_submission_db(submission_id)
+        publication_data = await reject_submission_db(submission_id, db)
         if publication_data:
             logger.debug("Successfully rejected")
             logger.debug("Mail send to the user in the background...")
@@ -80,10 +92,10 @@ def reject_submission_controller(background_tasks, submission_id, current_user):
         return response_json({}, 'Something went wrong', 500)
 
 
-def download_manuscript_controller(submission_id, current_user):
+async def download_manuscript_controller(submission_id, current_user, db):
     try:
         logger.debug(f"User is trying to get publication : {submission_id}")
-        publication_data = get_submission_data_admin_db(submission_id)
+        publication_data = await get_submission_data_admin_db(submission_id, db)
 
         if publication_data and os.path.isfile(publication_data["docx_path"]):
             return FileResponse(
@@ -98,10 +110,10 @@ def download_manuscript_controller(submission_id, current_user):
         return response_json({}, 'Something went wrong', 500)
 
 
-def publish_submission_controller(background_tasks, payload, current_user):
+async def publish_submission_controller(background_tasks, payload, current_user, db):
     try:
         logger.debug("admin is trying to publish a doc")
-        publication_data = publish_submission_db(payload)
+        publication_data = await publish_submission_db(payload, db)
         if publication_data:
             logger.debug("Successfully Published")
             logger.debug("Mail send to the user in the background...")

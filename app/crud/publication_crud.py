@@ -1,13 +1,10 @@
 from datetime import datetime, timedelta
-from app.core.db import db
 import pytz
 import json
 from bson import ObjectId
 
-submitted_publication = db["submitted_publication"]
 
-
-def submit_publication_db(
+async def submit_publication_db(
         docx_path,
         img_path,
         img_description,
@@ -16,7 +13,8 @@ def submit_publication_db(
         email,
         submission_type,
         publication_title,
-        author_bio
+        author_bio,
+        db
 ):
     try:
         data = {
@@ -36,7 +34,7 @@ def submit_publication_db(
             "is_published": 0,
             "is_rejected": 0
         }
-        result = submitted_publication.insert_one(data)
+        result = await db.submitted_publication.insert_one(data)
         if result.acknowledged:
             return str(result.inserted_id)
         return None
@@ -48,7 +46,7 @@ def submit_publication_db(
 ist_timezone = pytz.timezone("Asia/Kolkata")
 
 
-def get_all_publications_admin_db(start_date, end_date, category):
+async def get_all_publications_admin_db(start_date, end_date, category, db):
     try:
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = datetime.strptime(end_date, "%Y-%m-%d")
@@ -64,15 +62,21 @@ def get_all_publications_admin_db(start_date, end_date, category):
         if category != "All":
             query["submission_type"] = category
 
-        publications = submitted_publication.find(query).sort("_id", -1)
-        res = []
+        # Use to_list() to get all documents as a list
+        publications_cursor = db.submitted_publication.find(query).sort("_id", -1)
+        publications = await publications_cursor.to_list(length=None)  # None = get all
 
+        res = []
         total_published = 0
         total_pending = 0
         total_rejected = 0
 
         for publication in publications:
-            status = "Published" if publication["is_published"] else "Rejected" if publication["is_rejected"] else "Pending"
+            status = (
+                "Published" if publication.get("is_published") else
+                "Rejected" if publication.get("is_rejected") else
+                "Pending"
+            )
 
             if status == "Published":
                 total_published += 1
@@ -81,27 +85,27 @@ def get_all_publications_admin_db(start_date, end_date, category):
             else:
                 total_pending += 1
 
-            this_publiaction = {
+            res.append({
                 "id": str(publication["_id"]),
-                "title": publication["publication_title"].title(),
+                "title": publication.get("publication_title", "").title(),
                 "created_at": (publication["created_at"] + timedelta(hours=5, minutes=30)).strftime("%d-%b-%Y %-I:%M %p"),
-                "author": f'{publication["first_name"]} {publication["last_name"]}',
-                "email": publication["email"],
-                "img": publication["image_path"],
-                "description": publication["description"],
-                "category": publication["submission_type"],
+                "author": f'{publication.get("first_name", "")} {publication.get("last_name", "")}',
+                "email": publication.get("email", ""),
+                "img": publication.get("image_path", ""),
+                "description": publication.get("description", ""),
+                "category": publication.get("submission_type", ""),
                 "status": status
-            }
-            res.append(this_publiaction)
+            })
+
         return res, total_published, total_pending, total_rejected
 
     except Exception as e:
         raise e
 
 
-def delete_submission_db(submission_id):
+async def delete_submission_db(submission_id, db):
     try:
-        submitted_publication.update_one(
+        await db.submitted_publication.update_one(
             {"_id": ObjectId(submission_id)},
             {"$set": {"is_deleted": 1}}
         )
@@ -110,9 +114,9 @@ def delete_submission_db(submission_id):
         raise e
 
 
-def reject_submission_db(submission_id):
+async def reject_submission_db(submission_id, db):
     try:
-        submitted_publication.update_one(
+        await db.submitted_publication.update_one(
             {"_id": ObjectId(submission_id)},
             {"$set": {"is_published": 0, "is_rejected": 1}}
         )
@@ -121,9 +125,9 @@ def reject_submission_db(submission_id):
         raise e
 
 
-def publish_submission_db(payload):
+async def publish_submission_db(payload, db):
     try:
-        submitted_publication.update_one(
+        await db.submitted_publication.update_one(
             {"_id": ObjectId(payload.submission_id)},
             {"$set": {
                 "is_published": 1,
@@ -137,7 +141,7 @@ def publish_submission_db(payload):
         raise e
 
 
-def get_all_publications_db(filter_by, search_param, page_number, limit):
+async def get_all_publications_db(filter_by, search_param, page_number, limit, db):
     try:
         skip = (page_number - 1) * 6
         query = {
@@ -151,8 +155,8 @@ def get_all_publications_db(filter_by, search_param, page_number, limit):
             query["publication_title"] = {
                 "$regex": search_param, "$options": "i"}
 
-        publications_cursor = submitted_publication.find(
-            query).sort("updated_at", -1).skip(skip).limit(limit+1)
+        publications_cursor = await db.submitted_publication.find(
+            query).sort("updated_at", -1).skip(skip).limit(limit+1).to_list(length=None)
         publications_list = list(publications_cursor)  # Convert to list once
 
         # Check if there is a next page
@@ -183,9 +187,9 @@ def get_all_publications_db(filter_by, search_param, page_number, limit):
         raise e
 
 
-def get_submission_data_admin_db(submission_id):
+async def get_submission_data_admin_db(submission_id, db):
     try:
-        publication_data = submitted_publication.find_one(
+        publication_data = await db.submitted_publication.find_one(
             {"_id": ObjectId(submission_id), "is_deleted": 0})
         if publication_data:
             status = "Published" if publication_data[
@@ -210,9 +214,9 @@ def get_submission_data_admin_db(submission_id):
         raise e
 
 
-def get_publication_data_db(publication_id):
+async def get_publication_data_db(publication_id, db):
     try:
-        publication_data = submitted_publication.find_one(
+        publication_data = await db.submitted_publication.find_one(
             {"_id": ObjectId(publication_id), "is_deleted": 0, "is_published": 1})
         if publication_data:
             data = {

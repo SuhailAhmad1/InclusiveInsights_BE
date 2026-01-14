@@ -11,7 +11,7 @@ from config import ACCESS_TOKEN_EXPIRE_DAYS, REFRESH_TOKEN_EXPIRE_DAYS, USER_SIG
 auth_service = AuthService()
 
 
-def register_user_controller(user):
+async def register_user_controller(user, db):
     """
         Controller to register user000
         :param user: user details
@@ -27,10 +27,10 @@ def register_user_controller(user):
         logger.debug(str(f"{user.email} is trying to signup...") +
                      '[register_user] [/app/controllers/auth_controller.py:20]')
 
-        userDetails = get_user_by_email_db(user.email)
+        userDetails = await get_user_by_email_db(user.email, db)
 
         if not userDetails:
-            create_new_user_db(user)
+            await create_new_user_db(user, db)
             logger.debug(str("User created successfully...") +
                          '[BE_Arcolab_new/app/controllers/auth_controller.py:27]')
 
@@ -47,7 +47,7 @@ def register_user_controller(user):
         return response_json({}, 'Something went wrong', 500)
 
 
-def login_user_controller(user):
+async def login_user_controller(user, db):
     """
         Controller to login user
         :param user: user details
@@ -56,7 +56,7 @@ def login_user_controller(user):
     try:
         logger.debug(str(f"{user.email} is trying to log in...") +
                      '[BE_Arcolab_new/app/controllers/auth_controller.py:49]')
-        userDetails = get_user_by_email_db(user.email)
+        userDetails = await get_user_by_email_db(user.email, db)
 
         if userDetails and auth_service.verify_password(user.password, userDetails['password']):
             logger.debug(str("Creating access token...") +
@@ -72,7 +72,7 @@ def login_user_controller(user):
                 data={"sub": userDetails['email']}, expires_delta=refresh_token_expires
             )
 
-            update_login_time_db(userDetails['id'])
+            await update_login_time_db(userDetails['id'], db)
 
             response_headers = {
                 "access_token": access_token,
@@ -103,7 +103,7 @@ def login_user_controller(user):
         return response_json({}, 'Something went wrong', 500)
 
 
-def refresh_access_token_controller(current_user):
+async def refresh_access_token_controller(current_user, db):
     """
         Controller to get refresh access token
         :param current_user: current user details taken from refresh_token
@@ -138,7 +138,7 @@ def refresh_access_token_controller(current_user):
         return response_json({}, "Something Went wrong", 500)
 
 
-def get_user_info_controller(current_user):
+async def get_user_info_controller(current_user, db):
     """
         Controller to get user info
         :param current_user: current user details
